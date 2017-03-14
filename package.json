@@ -1,0 +1,35 @@
+{
+    "name"        : "FileLoader",
+    "version"     : "0.1.0",
+    "description" : "",
+    "keywords" : [
+        "javascript",
+        "file load",
+        "frontend",
+        "lazy load"
+    ],
+    "repository" : {
+        "type" : "git",
+        "url"  : "https://github.com/hans-sperling/FileLoader"
+    },
+    "dependencies" : {
+        "grunt"                : "1.x.x",
+        "grunt-cli"            : "1.x.x",
+        "grunt-contrib-concat" : "1.x.x",
+        "grunt-jsdoc"          : "2.x.x",
+        "ink-docstrap"         : "1.x.x",
+        "grunt-contrib-uglify" : "2.x.x"
+    },
+    "project" : {
+        "url"   : "https://github.com/hans-sperling/FileLoader/projects",
+        "email" : "info@bluejade.de"
+    },
+    "bugs" : {
+        "url"   : "https://github.com/hans-sperling/FileLoader/issues",
+        "email" : "info@bluejade.de"
+    },
+    "contributors" : [{
+        "name"  : "Danny Grübl",
+        "email" : "info@bluejade.de"
+    }]
+}
