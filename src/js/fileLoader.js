@@ -6,12 +6,15 @@ function FileLoader(configuration) {
     // ---------------------------------------------------------------------------------------- Preferences & Properties
 
     var defaultConfiguration = {
-            files         : [],
-            onFileLoaded  : function (){},
-            onFilesLoaded : function (){},
-            onError       : function (){}
+            files     : [],
+            callbacks : {
+                onFileLoaded  : function (){},
+                onFilesLoaded : function (){},
+                onError       : function (){}
+            }
         },
-        config = defaultConfiguration;
+        config = defaultConfiguration,
+        htmlHeadElement;
 
     // ----------------------------------------------------------------------------------------- Internal module methods
 
@@ -30,8 +33,10 @@ function FileLoader(configuration) {
      *
      */
     function init() {
+        htmlHeadElement = getHtmlHeadElement();
+
         setUserConfiguration(configuration);
-        loadFiles();
+        loadFiles(config.files, config.callbacks);
     }
 
     // -------------------------------------------------------------------------------------------------- Helper methods
@@ -90,9 +95,10 @@ function FileLoader(configuration) {
         return Object.prototype.toString.call(value) == "[object Undefined]";
     }
 
+    // --------------------------------------------------------------------------------------------------------- Methods
 
     /**
-     * Checks if the given configuration is valid.
+     * Overwrites the default config with the user config if it is valid
      *
      * @param  {Object} configuration
      * @return {boolean}
@@ -106,64 +112,99 @@ function FileLoader(configuration) {
         amount = configuration.files.length;
 
         for (i = 0; i < amount; i++) {
-            if (isObject(configuration.files[i])) {
-                if (isString(configuration.files[i].file)) {
-                    config.files.push(configuration.files[i]);
-                }
-                else {
-                    console.warn('Parameter: configuration.files[' + i + '] is not a valid string!');
-                }
+            if (isString(configuration.files[i])) {
+                config.files.push(configuration.files[i]);
+            }
+            else {
+                console.warn('Parameter: configuration.files[' + i + '] is not a valid string!');
             }
         }
 
-        if (isFunction(configuration.onFileLoaded)) {
-            config.onFileLoaded = configuration.onFileLoaded;
-        }
-        else if (!isUndefined(configuration.onFileLoaded)) { return false; }
+        if (!isObject(configuration.callbacks)) { return false; }
 
-        if (isFunction(configuration.onFilesLoaded)) {
-            config.onFilesLoaded = configuration.onFilesLoaded;
+        if (isFunction(configuration.callbacks.onFileLoaded)) {
+            config.callbacks.onFileLoaded = configuration.callbacks.onFileLoaded;
         }
-        else if (!isUndefined(configuration.onFileLoaded)) { return false; }
+        else if (!isUndefined(configuration.callbacks.onFileLoaded)) { return false; }
 
-        if (isFunction(configuration.onError)) {
-            config.onError = configuration.onError;
+        if (isFunction(configuration.callbacks.onFilesLoaded)) {
+            config.callbacks.onFilesLoaded = configuration.callbacks.onFilesLoaded;
         }
-        else if (!isUndefined(configuration.onError)) { return false; }
+        else if (!isUndefined(configuration.callbacks.onFileLoaded)) { return false; }
+
+        if (isFunction(configuration.callbacks.onError)) {
+            config.callbacks.onError = configuration.callbacks.onError;
+        }
+        else if (!isUndefined(configuration.callbacks.onError)) { return false; }
 
         return true;
     }
 
-    // --------------------------------------------------------------------------------------------------------- Methods
 
-    function loadFiles() {
-        var amount = config.files.length,
+    /**
+     * Returns the HTML Head-Element.
+     *
+     * @returns {*}
+     */
+    function getHtmlHeadElement() {
+        return document.getElementsByTagName('head')[0];
+    }
+
+
+    /**
+     * Iterates through all given files and calls a method to append these files to the HTML Head-Element.
+     *
+     * @param {Object} callbacks
+     * @param {Array} files
+     */
+    function loadFiles(files, callbacks) {
+        var amount = files.length,
             i      = 0;
 
         for (; i < amount; i++) {
-            loadFile(config.files[i].file);
+            loadFile(config.files[i], callbacks);
         }
     }
 
 
-    function loadFile(file) {
-        var splitList = file.split('.'),
-            ext       = splitList[splitList.length - 1].toLowerCase();
+    /**
+     * Returns the extension of the given file.
+     *
+     * @param   {String} file
+     * @returns {String}
+     */
+    function getFileExtension(file) {
+        return file.split('.').slice(-1).pop();
+    }
 
-        switch (ext) {
-            case 'js':
-                addElementToDom(getScriptElement(file));
-                break;
+
+    function loadFile(file, callbacks) {
+        switch (getFileExtension(file).toLowerCase()) {
             case 'css':
-                addElementToDom(getLinkElement(file));
+                appendElementToDom(getNewLinkElement(file), onFileLoad, onFileError);
+                break;
+            case 'js':
+                appendElementToDom(getNewScriptElement(file), onFileLoad, onFileError);
                 break;
             default:
                 return;
         }
+
+        function onFileLoad() {
+            callbacks.onFileLoaded({
+                file : file
+            });
+        }
+
+        function onFileError() {
+            callbacks.onError({
+                file : file
+            });
+        }
     }
 
 
-    function getScriptElement(file) {
+    function getNewScriptElement(file) {
         var fileObject = document.createElement('script');
 
         fileObject.type  = 'text/javascript';
@@ -174,7 +215,7 @@ function FileLoader(configuration) {
     }
 
 
-    function getLinkElement(file) {
+    function getNewLinkElement(file) {
         var fileObject = document.createElement('link');
 
         fileObject.rel   = 'stylesheet';
@@ -185,37 +226,20 @@ function FileLoader(configuration) {
     }
 
 
-    function addElementToDom(element) {
-        console.log(element);
-
-        var headElement  = document.getElementById('head');
-
-        // @todo - Why it is necessary to create a clone element?
-        var elementClone = element.cloneNode(true);
-
-        headElement.appendChild(elementClone);
-
-        if (elementClone.addEventListener) {
-            elementClone.addEventListener('load', onFileLoaded, false);
+    function appendElementToDom(element, onLoad, onError) {
+        if (element.addEventListener) {
+            element.addEventListener('load', onLoad, false);
         }
-        else if (elementClone.attachEvent) {
-            elementClone.attachEvent('load', onFileLoaded);
+        else if (element.attachEvent) {
+            element.attachEvent('load', onLoad);
         }
         else {
-            elementClone.onreadystatechange = onLoadCondition;
+            element.onreadystatechange = onLoad;
         }
 
-        elementClone.onerror = onError
-    }
-    
+        element.onerror = onError;
 
-    function onFileLoaded() {
-        config.onFileLoaded();
-    }
-
-
-    function onError() {
-        config.onError();
+        htmlHeadElement.appendChild(element);
     }
 
     // -------------------------------------------------------------------------------------------------------- Initials

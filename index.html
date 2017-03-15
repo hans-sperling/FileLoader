@@ -15,20 +15,25 @@
 
     </head>
     <body>
-    
+        <div class="red"></div>
+        <div class="blue"></div>
+        <div class="green"></div>
+
         <script>
             var configuration = {
                     files : [
-                        { file : 'loading-files/style1.css' },
-                        { file : 'loading-files/script1.js' },
-                        { file : 'loading-files/script2.min.js' },
-                        { file : 'load/a/non-existing/file' },
-                        { file : 'loading-files/template1.html' },
-                        { file : 'loading-files/template2.html' }
+                        'example/loading-files/blue.css',
+                        'example/loading-files/red.css',
+                        'example/loading-files/green.css',
+                        'example/loading-files/alert.js',
+                        'example/load/a/non-existing/file.js',
+                        'example/load/a/non-existing/file'
                     ],
-                    onFileLoaded  : function () {},
-                    onFilesLoaded : function () {},
-                    onError       : function () {}
+                    callbacks : {
+                        onFileLoaded  : function (callbackData) { console.info('File ' + callbackData.file + ' has been loaded'); },
+                        onFilesLoaded : function (callbackData) {},
+                        onError       : function (callbackData) { console.warn('File ' + callbackData.file + ' has been loaded'); }
+                    }
                 },
                 fileLoader = FileLoader(configuration);
         </script>
