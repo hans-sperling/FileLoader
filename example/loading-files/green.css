@@ -1,5 +1,11 @@
 body div.green {
     background : green;
-    width      : 100%;
+    color      : white;
     height     : 40px;
+    width      : 100%;
+}
+
+
+body div.green:before{
+    content: 'green.css has been loaded | ';
 }

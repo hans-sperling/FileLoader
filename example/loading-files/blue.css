@@ -1,5 +1,10 @@
 body div.blue {
     background : blue;
-    width      : 100%;
+    color      : white;
     height     : 40px;
+    width      : 100%;
+}
+
+body div.blue:before{
+    content: 'blue.css has been loaded | ';
 }

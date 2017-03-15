@@ -1,5 +1,11 @@
 body div.red {
     background : red;
-    width      : 100%;
+    color      : white;
     height     : 40px;
+    width      : 100%;
+}
+
+
+body div.red:before{
+    content: 'red.css has been loaded | ';
 }

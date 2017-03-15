@@ -23,16 +23,17 @@
             var configuration = {
                     files : [
                         'example/loading-files/blue.css',
+                        'example/loading-files/blue.js',
                         'example/loading-files/red.css',
+                        'example/loading-files/red.js',
                         'example/loading-files/green.css',
-                        'example/loading-files/alert.js',
-                        'example/load/a/non-existing/file.js',
-                        'example/load/a/non-existing/file'
+                        'example/loading-files/green.js',
+                        'example/load/a/non-existing/file.js'
                     ],
                     callbacks : {
                         onFileLoaded  : function (callbackData) { console.info('File ' + callbackData.file + ' has been loaded'); },
                         onFilesLoaded : function (callbackData) {},
-                        onError       : function (callbackData) { console.warn('File ' + callbackData.file + ' has been loaded'); }
+                        onError       : function (callbackData) { console.warn('File ' + callbackData.file + ' has not been loaded'); }
                     }
                 },
                 fileLoader = FileLoader(configuration);
