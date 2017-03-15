@@ -30,7 +30,8 @@ function FileLoader(configuration) {
      *
      */
     function init() {
-        setConfiguration();
+        setUserConfiguration(configuration);
+        loadFiles();
     }
 
     // -------------------------------------------------------------------------------------------------- Helper methods
@@ -96,7 +97,7 @@ function FileLoader(configuration) {
      * @param  {Object} configuration
      * @return {boolean}
      */
-    function isValidConfiguration(configuration) {
+    function setUserConfiguration(configuration) {
         var i, amount;
 
         if (!isObject(configuration)) { return false; }
@@ -135,12 +136,86 @@ function FileLoader(configuration) {
 
     // --------------------------------------------------------------------------------------------------------- Methods
 
-    function setConfiguration() {
-        if (!isValidConfiguration(configuration)) {
-            console.warn('The given configuration parameter is not valid!');
+    function loadFiles() {
+        var amount = config.files.length,
+            i      = 0;
+
+        for (; i < amount; i++) {
+            loadFile(config.files[i].file);
+        }
+    }
+
+
+    function loadFile(file) {
+        var splitList = file.split('.'),
+            ext       = splitList[splitList.length - 1].toLowerCase();
+
+        switch (ext) {
+            case 'js':
+                addElementToDom(getScriptElement(file));
+                break;
+            case 'css':
+                addElementToDom(getLinkElement(file));
+                break;
+            default:
+                return;
+        }
+    }
+
+
+    function getScriptElement(file) {
+        var fileObject = document.createElement('script');
+
+        fileObject.type  = 'text/javascript';
+        fileObject.async = true;
+        fileObject.src   = file;
+
+        return fileObject;
+    }
+
+
+    function getLinkElement(file) {
+        var fileObject = document.createElement('link');
+
+        fileObject.rel   = 'stylesheet';
+        fileObject.async = true;
+        fileObject.href  = file;
+
+        return fileObject;
+    }
+
+
+    function addElementToDom(element) {
+        console.log(element);
+
+        var headElement  = document.getElementById('head');
+
+        // @todo - Why it is necessary to create a clone element?
+        var elementClone = element.cloneNode(true);
+
+        headElement.appendChild(elementClone);
+
+        if (elementClone.addEventListener) {
+            elementClone.addEventListener('load', onFileLoaded, false);
+        }
+        else if (elementClone.attachEvent) {
+            elementClone.attachEvent('load', onFileLoaded);
+        }
+        else {
+            elementClone.onreadystatechange = onLoadCondition;
         }
 
-        console.log(config);
+        elementClone.onerror = onError
+    }
+    
+
+    function onFileLoaded() {
+        config.onFileLoaded();
+    }
+
+
+    function onError() {
+        config.onError();
     }
 
     // -------------------------------------------------------------------------------------------------------- Initials
