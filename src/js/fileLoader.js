@@ -13,7 +13,7 @@ function FileLoader(configuration) {
                 onError       : function (){}
             }
         },
-        config = defaultConfiguration,
+        config               = defaultConfiguration,
         htmlHeadElement;
 
     // ----------------------------------------------------------------------------------------- Internal module methods
@@ -25,12 +25,20 @@ function FileLoader(configuration) {
     * @returns {Object}
     */
     function getPublicApi() {
-        return {};
+        return {
+            loadFile  : loadFile,
+            loadFiles : loadFiles
+        };
     }
 
 
     /**
+     * Initialize this module.
+     * Determines the HTML Head-Element.
+     * Overwrites the default config with the given one from the user.
+     * Loads all given files and appends them to the HTML Head-Element.
      *
+     * @private
      */
     function init() {
         htmlHeadElement = getHtmlHeadElement();
@@ -96,10 +104,72 @@ function FileLoader(configuration) {
     }
 
     // --------------------------------------------------------------------------------------------------------- Methods
+    // ------------------------------------------------------------------------------------------------------ Public
 
     /**
-     * Overwrites the default config with the user config if it is valid
+     * Iterates through all given files and calls a method to append these files to the HTML Head-Element.
      *
+     * @public
+     * @param {Array}    files
+     * @param {Object}   callbacks
+     * @param {Function} callbacks.onFileLoaded
+     * @param {Function} callbacks.onFilesLoaded
+     * @param {Function} callbacks.onError
+     */
+    function loadFiles(files, callbacks) {
+        var amount = files.length,
+            i      = 0;
+
+        for (; i < amount; i++) {
+            loadFile(config.files[i], callbacks);
+        }
+    }
+
+
+    /**
+     * Appends the given file to the HTML Head-Element if the file exists.
+     * Callback methods: onFileLoaded, onError
+     *
+     * @public
+     * @param {String}   file
+     * @param {Object}   callbacks
+     * @param {Function} callbacks.onFileLoaded
+     * @param {Function} callbacks.onFilesLoaded
+     * @param {Function} callbacks.onError
+     */
+    function loadFile(file, callbacks) {
+        switch (getFileExtension(file).toLowerCase()) {
+            case 'css':
+                appendElementToDom(getNewLinkElement(file), onFileLoad, onFileError);
+                break;
+            case 'js':
+                appendElementToDom(getNewScriptElement(file), onFileLoad, onFileError);
+                break;
+            default:
+                return;
+        }
+
+        function onFileLoad() {
+            callbacks.onFileLoaded({
+                file : file
+            });
+        }
+
+        function onFileError() {
+            callbacks.onError({
+                file : file
+            });
+        }
+    }
+
+    // ----------------------------------------------------------------------------------------------------- Private
+
+    /**
+     * Overwrites the default config with the user config if it is valid.
+     *
+     * @todo - Boolean returns are unnecessary!
+     *
+     * @private
      * @param  {Object} configuration
      * @return {boolean}
      */
@@ -144,26 +214,10 @@ function FileLoader(configuration) {
     /**
      * Returns the HTML Head-Element.
      *
-     * @returns {*}
+     * @returns {HTMLElement}
      */
     function getHtmlHeadElement() {
         return document.getElementsByTagName('head')[0];
-    }
-
-
-    /**
-     * Iterates through all given files and calls a method to append these files to the HTML Head-Element.
-     *
-     * @param {Object} callbacks
-     * @param {Array} files
-     */
-    function loadFiles(files, callbacks) {
-        var amount = files.length,
-            i      = 0;
-
-        for (; i < amount; i++) {
-            loadFile(config.files[i], callbacks);
-        }
     }
 
 
@@ -178,32 +232,13 @@ function FileLoader(configuration) {
     }
 
 
-    function loadFile(file, callbacks) {
-        switch (getFileExtension(file).toLowerCase()) {
-            case 'css':
-                appendElementToDom(getNewLinkElement(file), onFileLoad, onFileError);
-                break;
-            case 'js':
-                appendElementToDom(getNewScriptElement(file), onFileLoad, onFileError);
-                break;
-            default:
-                return;
-        }
-
-        function onFileLoad() {
-            callbacks.onFileLoaded({
-                file : file
-            });
-        }
-
-        function onFileError() {
-            callbacks.onError({
-                file : file
-            });
-        }
-    }
-
-
+    /**
+     * Returns an HTML Script-Element with the given file as src attribute.
+     *
+     * @private
+     * @param   {String} file
+     * @returns {HTMLElement}
+     */
     function getNewScriptElement(file) {
         var fileObject = document.createElement('script');
 
@@ -215,6 +250,13 @@ function FileLoader(configuration) {
     }
 
 
+    /**
+     * Returns an HTML Link-Element with the given file as href attribute.
+     *
+     * @private
+     * @param   {String} file
+     * @returns {HTMLElement}
+     */
     function getNewLinkElement(file) {
         var fileObject = document.createElement('link');
 
@@ -226,6 +268,16 @@ function FileLoader(configuration) {
     }
 
 
+    /**
+     * Appends the given HTML Element to the HTML Head-Element.
+     * Calls onLoad method if the file has been loaded successfully and
+     * calls onError method if there was an error on loading this file.
+     *
+     * @private
+     * @param {HTMLElement} element
+     * @param {Function}    onLoad
+     * @param {Function}    onError
+     */
     function appendElementToDom(element, onLoad, onError) {
         if (element.addEventListener) {
             element.addEventListener('load', onLoad, false);
