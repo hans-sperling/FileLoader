@@ -1,7 +1,7 @@
 {
     "name"        : "FileLoader",
-    "version"     : "0.1.0",
-    "description" : "",
+    "version"     : "1.0.0",
+    "description" : "Async loading of CSS and JS files by appending HTML link- or script-Elements to the HTML Head-Element.",
     "keywords" : [
         "javascript",
         "file load",

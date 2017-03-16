@@ -16,4 +16,5 @@ Thumbs.db
 
 # Application
 node_modules/
-
+doc/
+dist/
