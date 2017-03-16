@@ -11,16 +11,17 @@ function FileLoader(files, callbacks) {
             onFilesLoaded : function (){},
             onError       : function (){}
         },
+        fileLoadDecrement = null,
         htmlHeadElement;
 
     // ----------------------------------------------------------------------------------------- Internal module methods
 
-   /*
-    * Returns the public api.
-    *
-    * @private
-    * @returns {Object}
-    */
+    /**
+     * Returns the public api.
+     *
+     * @private
+     * @returns {Object}
+     */
     function getPublicApi() {
         return {
             loadFile  : loadFile,
@@ -101,6 +102,7 @@ function FileLoader(files, callbacks) {
     }
 
     // --------------------------------------------------------------------------------------------------------- Methods
+
     // ------------------------------------------------------------------------------------------------------ Public
 
     /**
@@ -114,8 +116,12 @@ function FileLoader(files, callbacks) {
      * @param {Function} callbacks.onError
      */
     function loadFiles(files, callbacks) {
+        secureParameters();
+
         var amount = files.length,
             i      = 0;
+
+        fileLoadDecrement = amount;
 
         for (; i < amount; i++) {
             loadFile(files[i], callbacks);
@@ -150,12 +156,38 @@ function FileLoader(files, callbacks) {
             callbacks.onFileLoaded({
                 file : file
             });
+
+            if (fileLoadDecrement === null) {
+                callbacks.onFilesLoaded();
+            }
+            else {
+                fileLoadDecrement--;
+
+                if (fileLoadDecrement <= 0) {
+                    callbacks.onFilesLoaded();
+                    fileLoadDecrement = null;
+                }
+            }
         }
 
         function onFileError() {
             callbacks.onError({
                 file : file
             });
+
+            if (fileLoadDecrement === null) {
+                callbacks.onFilesLoaded();
+            }
+            else {
+                fileLoadDecrement--;
+
+                if (fileLoadDecrement <= 0) {
+                    callbacks.onFilesLoaded();
+                    fileLoadDecrement = null;
+                }
+            }
+
+
         }
     }
 

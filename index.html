@@ -22,6 +22,8 @@
         <script>
             var fileLoader;
 
+//            fileLoader = new FileLoader();
+
             fileLoader = new FileLoader([
                     'example/loading-files/blue.css',
                     'example/loading-files/blue.js',
@@ -33,7 +35,8 @@
                     onError       : onError
                 }
             );
-
+/**/
+/*
             fileLoader.loadFiles([
                     'example/loading-files/red.js',
                     'example/loading-files/green.css'
@@ -43,12 +46,14 @@
                     onError       : onError
                 }
             );
-
+/*
+/**/
             fileLoader.loadFile('example/loading-files/green.js', {
-                onFileLoaded : onFileLoaded,
-                onError      : onError
+                onFileLoaded  : onFileLoaded,
+                onFilesLoaded : onFilesLoaded,
+                onError       : onError
             });
-
+/**/
             // Callbacks
 
             function onFileLoaded(callbackData) {
@@ -56,7 +61,7 @@
             }
 
             function onFilesLoaded() {
-                console.info('All files has been loaded.');
+                console.error('All files has been loaded.');
             }
 
             function onError(callbackData) {
