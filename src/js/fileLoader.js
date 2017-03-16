@@ -1,5 +1,12 @@
 /**
+ * FileLoader - Async loading of CSS and JS files by appending HTML link- or script-Elements to the HTML Head-Element.
  *
+ * @class FileLoader
+ *
+ * @type     {Object}
+ * @property {Function} loadFile  - Appends the given file to the HTML Head-Element if the file exists.
+ * @property {Function} loadFiles - Appends all given files to the HTML Head-Element if the files exist.
+ * @returns  {Object}
  */
 function FileLoader(files, callbacks) {
 
@@ -12,6 +19,7 @@ function FileLoader(files, callbacks) {
             onError       : function (){}
         },
         fileLoadDecrement = null,
+        quietOutput       = true,
         htmlHeadElement;
 
     // ----------------------------------------------------------------------------------------- Internal module methods
@@ -41,7 +49,6 @@ function FileLoader(files, callbacks) {
     function init() {
         htmlHeadElement = getHtmlHeadElement();
 
-        secureParameters(); // @todo - absichern parameters
         loadFiles(files, callbacks);
     }
 
@@ -116,14 +123,15 @@ function FileLoader(files, callbacks) {
      * @param {Function} callbacks.onError
      */
     function loadFiles(files, callbacks) {
-        secureParameters();
+        var fileAmount, i;
 
-        var amount = files.length,
-            i      = 0;
+        files      = getProtectedParameterFiles(files);
+        fileAmount = files.length;
+        i          = 0;
 
-        fileLoadDecrement = amount;
+        fileLoadDecrement = fileAmount;
 
-        for (; i < amount; i++) {
+        for (; i < fileAmount; i++) {
             loadFile(files[i], callbacks);
         }
     }
@@ -141,15 +149,21 @@ function FileLoader(files, callbacks) {
      * @param {Function} callbacks.onError
      */
     function loadFile(file, callbacks) {
+        callbacks = getProtectParameterCallbacks(callbacks);
+
         switch (getFileExtension(file).toLowerCase()) {
-            case 'css':
+            case 'css' :
                 appendElementToDom(getNewLinkElement(file), onFileLoad, onFileError);
                 break;
-            case 'js':
+            case 'js' :
                 appendElementToDom(getNewScriptElement(file), onFileLoad, onFileError);
                 break;
-            default:
-                return;
+            default :
+                if (!quietOutput) {
+                    console.warn('File ' + file + ' has got an invalid extension.');
+                }
+
+                onFileError();
         }
 
         function onFileLoad() {
@@ -157,17 +171,7 @@ function FileLoader(files, callbacks) {
                 file : file
             });
 
-            if (fileLoadDecrement === null) {
-                callbacks.onFilesLoaded();
-            }
-            else {
-                fileLoadDecrement--;
-
-                if (fileLoadDecrement <= 0) {
-                    callbacks.onFilesLoaded();
-                    fileLoadDecrement = null;
-                }
-            }
+            handleDecrement();
         }
 
         function onFileError() {
@@ -175,6 +179,10 @@ function FileLoader(files, callbacks) {
                 file : file
             });
 
+            handleDecrement();
+        }
+
+        function handleDecrement() {
             if (fileLoadDecrement === null) {
                 callbacks.onFilesLoaded();
             }
@@ -186,29 +194,27 @@ function FileLoader(files, callbacks) {
                     fileLoadDecrement = null;
                 }
             }
-
-
         }
     }
 
     // ----------------------------------------------------------------------------------------------------- Private
 
     /**
-     * Overwrites the default config with the user config if it is valid.
-     *
-     * @todo - Boolean returns are unnecessary!
+     * Returns a valid version of the given files parameter or an empty array as fallback.
      *
      * @private
-     * @param  {Object} configuration
-     * @return {boolean}
+     * @param   {Array|*} files
+     * @returns {Array}
      */
-    function secureParameters() {
+    function getProtectedParameterFiles(files) {
         var fileList = [],
             i, fileAmount;
 
-        // ----------------------------------------------------------------------------------------- Parameter files
-
         if (!isArray(files)) {
+            if (!quietOutput) {
+                console.warn('Parameter files is not valid; will be overwritten by fallback value');
+            }
+
             files = fallbackFiles;
         }
         else {
@@ -218,32 +224,60 @@ function FileLoader(files, callbacks) {
                 if (isString(files[i])) {
                     fileList.push(files[i]);
                 }
-                else {
-                    console.warn('Parameter: files[' + i + '] is not a valid string!');
+                else if (!quietOutput){
+                    console.warn('Parameter: files[' + i + '] is not valid; will be ignored');
                 }
             }
 
             files = fileList;
         }
 
-        // -------------------------------------------------------------------------------------- Parameter callback
+        return files;
+    }
 
+
+    /**
+     * Returns a valid version of the given callbacks parameter or an fallback object.
+     *
+     * @private
+     * @param   {Object|*} callbacks
+     * @returns {Object}
+     */
+    function getProtectParameterCallbacks(callbacks) {
         if (!isObject(callbacks)) {
+            if (!quietOutput) {
+                console.warn('Parameter callbacks is not valid; will be overwritten by fallback value');
+            }
+
             callbacks = fallbackCallbacks;
         }
         else {
             if (!isFunction(callbacks.onFileLoaded)) {
+                if (!isUndefined(callbacks.onError) && !quietOutput) {
+                    console.warn('Parameter callbacks.onFileLoaded is not valid; will be overwritten by fallback value');
+                }
+
                 callbacks.onFileLoaded = fallbackCallbacks.onFileLoaded;
             }
 
             if (!isFunction(callbacks.onFilesLoaded)) {
+                if (!isUndefined(callbacks.onError) && !quietOutput) {
+                    console.warn('Parameter callbacks.onFilesLoaded is not valid; will be overwritten by fallback value');
+                }
+
                 callbacks.onFilesLoaded = fallbackCallbacks.onFilesLoaded;
             }
 
             if (!isFunction(callbacks.onError)) {
+                if (!isUndefined(callbacks.onError) && !quietOutput) {
+                    console.warn('Parameter callbacks.onError is not valid; will be overwritten by fallback value');
+                }
+
                 callbacks.onError = fallbackCallbacks.onError;
             }
         }
+
+        return callbacks;
     }
 
 
@@ -330,11 +364,9 @@ function FileLoader(files, callbacks) {
         htmlHeadElement.appendChild(element);
     }
 
-    // -------------------------------------------------------------------------------------------------------- Initials
+    // ----------------------------------------------------------------------------- Initial & Constructor call / Return
 
     (init)();
-
-    // --------------------------------------------------------------------------------------------------------- Returns
 
     return getPublicApi();
 }
