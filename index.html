@@ -20,23 +20,48 @@
         <div class="green"></div>
 
         <script>
-            var configuration = {
-                    files : [
-                        'example/loading-files/blue.css',
-                        'example/loading-files/blue.js',
-                        'example/loading-files/red.css',
-                        'example/loading-files/red.js',
-                        'example/loading-files/green.css',
-                        'example/loading-files/green.js',
-                        'example/load/a/non-existing/file.js'
-                    ],
-                    callbacks : {
-                        onFileLoaded  : function (callbackData) { console.info('File ' + callbackData.file + ' has been loaded'); },
-                        onFilesLoaded : function (callbackData) {},
-                        onError       : function (callbackData) { console.warn('File ' + callbackData.file + ' has not been loaded'); }
-                    }
-                },
-                fileLoader = FileLoader(configuration);
+            var fileLoader;
+
+            fileLoader = new FileLoader([
+                    'example/loading-files/blue.css',
+                    'example/loading-files/blue.js',
+                    'example/loading-files/red.css',
+                    'example/load/a/non-existing/file.js'
+                ], {
+                    onFileLoaded  : onFileLoaded,
+                    onFilesLoaded : onFilesLoaded,
+                    onError       : onError
+                }
+            );
+
+            fileLoader.loadFiles([
+                    'example/loading-files/red.js',
+                    'example/loading-files/green.css'
+                ], {
+                    onFileLoaded  : onFileLoaded,
+                    onFilesLoaded : onFilesLoaded,
+                    onError       : onError
+                }
+            );
+
+            fileLoader.loadFile('example/loading-files/green.js', {
+                onFileLoaded : onFileLoaded,
+                onError      : onError
+            });
+
+            // Callbacks
+
+            function onFileLoaded(callbackData) {
+                console.info('File ' + callbackData.file + ' has been loaded.');
+            }
+
+            function onFilesLoaded() {
+                console.info('All files has been loaded.');
+            }
+
+            function onError(callbackData) {
+                console.warn('File ' + callbackData.file + ' has not been loaded.');
+            }
         </script>
     </body>
 </html>

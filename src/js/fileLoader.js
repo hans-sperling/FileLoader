@@ -1,19 +1,16 @@
 /**
  *
  */
-function FileLoader(configuration) {
+function FileLoader(files, callbacks) {
 
     // ---------------------------------------------------------------------------------------- Preferences & Properties
 
-    var defaultConfiguration = {
-            files     : [],
-            callbacks : {
-                onFileLoaded  : function (){},
-                onFilesLoaded : function (){},
-                onError       : function (){}
-            }
+    var fallbackFiles     = [],
+        fallbackCallbacks = {
+            onFileLoaded  : function (){},
+            onFilesLoaded : function (){},
+            onError       : function (){}
         },
-        config               = defaultConfiguration,
         htmlHeadElement;
 
     // ----------------------------------------------------------------------------------------- Internal module methods
@@ -43,8 +40,8 @@ function FileLoader(configuration) {
     function init() {
         htmlHeadElement = getHtmlHeadElement();
 
-        setUserConfiguration(configuration);
-        loadFiles(config.files, config.callbacks);
+        secureParameters(); // @todo - absichern parameters
+        loadFiles(files, callbacks);
     }
 
     // -------------------------------------------------------------------------------------------------- Helper methods
@@ -121,7 +118,7 @@ function FileLoader(configuration) {
             i      = 0;
 
         for (; i < amount; i++) {
-            loadFile(config.files[i], callbacks);
+            loadFile(files[i], callbacks);
         }
     }
 
@@ -173,41 +170,48 @@ function FileLoader(configuration) {
      * @param  {Object} configuration
      * @return {boolean}
      */
-    function setUserConfiguration(configuration) {
-        var i, amount;
+    function secureParameters() {
+        var fileList = [],
+            i, fileAmount;
 
-        if (!isObject(configuration)) { return false; }
-        if (!isArray(configuration.files)) { return false; }
+        // ----------------------------------------------------------------------------------------- Parameter files
 
-        amount = configuration.files.length;
+        if (!isArray(files)) {
+            files = fallbackFiles;
+        }
+        else {
+            fileAmount = files.length;
 
-        for (i = 0; i < amount; i++) {
-            if (isString(configuration.files[i])) {
-                config.files.push(configuration.files[i]);
+            for (i = 0; i < fileAmount; i++) {
+                if (isString(files[i])) {
+                    fileList.push(files[i]);
+                }
+                else {
+                    console.warn('Parameter: files[' + i + '] is not a valid string!');
+                }
             }
-            else {
-                console.warn('Parameter: configuration.files[' + i + '] is not a valid string!');
+
+            files = fileList;
+        }
+
+        // -------------------------------------------------------------------------------------- Parameter callback
+
+        if (!isObject(callbacks)) {
+            callbacks = fallbackCallbacks;
+        }
+        else {
+            if (!isFunction(callbacks.onFileLoaded)) {
+                callbacks.onFileLoaded = fallbackCallbacks.onFileLoaded;
+            }
+
+            if (!isFunction(callbacks.onFilesLoaded)) {
+                callbacks.onFilesLoaded = fallbackCallbacks.onFilesLoaded;
+            }
+
+            if (!isFunction(callbacks.onError)) {
+                callbacks.onError = fallbackCallbacks.onError;
             }
         }
-
-        if (!isObject(configuration.callbacks)) { return false; }
-
-        if (isFunction(configuration.callbacks.onFileLoaded)) {
-            config.callbacks.onFileLoaded = configuration.callbacks.onFileLoaded;
-        }
-        else if (!isUndefined(configuration.callbacks.onFileLoaded)) { return false; }
-
-        if (isFunction(configuration.callbacks.onFilesLoaded)) {
-            config.callbacks.onFilesLoaded = configuration.callbacks.onFilesLoaded;
-        }
-        else if (!isUndefined(configuration.callbacks.onFileLoaded)) { return false; }
-
-        if (isFunction(configuration.callbacks.onError)) {
-            config.callbacks.onError = configuration.callbacks.onError;
-        }
-        else if (!isUndefined(configuration.callbacks.onError)) { return false; }
-
-        return true;
     }
 
 
